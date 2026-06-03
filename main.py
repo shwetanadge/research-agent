@@ -1,21 +1,12 @@
 from dotenv import load_dotenv
-from pydantic import BaseModel
-# from groq import Groq
 from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
-from langchain.agents import create_agent
+# from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import SystemMessage, HumanMessage
+from pydantic import BaseModel, Field
 import os
 
 #Load .env
 load_dotenv()
-
-#define the structure we want from LLM
-class ResearchResponse(BaseModel):
-    topic: str
-    summary: str
-    sources: list[str]
-    tools_used: list[str]
 
 #Initialize Groq LLM
 # to test the API - print(os.getenv("GROQ_API_KEY"))
@@ -24,51 +15,60 @@ llm = ChatGroq(
     api_key=os.getenv("YOUR_GROQ_API_KEY")
 )
 
-#Create Parser
-parser = PydanticOutputParser(pydantic_object=ResearchResponse)
+#define the structure we want from LLM - pydantic
+class ResearchResponse(BaseModel):
+    topic: str = Field(description="Title of the object")
+    summary: str = Field(description="2-3 sentences line summary")
+    key_facts: list[str] = Field(description="list few facts")
+    conclusion: str = Field(description="one line conclusion")
+
+#Attach the structure to the LLM
+structured_llm = llm.with_structured_output(ResearchResponse)
+
+#Create Parser that expects JSON
+# parser = JsonOutputParser()
 
 
-# Create prompt template
-prompt = ChatPromptTemplate.from_template(
-    """
+# Create system prompt to respond in JSON format
+system_prompt = """
 You are a research assistant.
+Research the given topic thoroughly and respond with accurate information.
+    """
 
-Answer the following question.
+messages = [
+    SystemMessage(content=system_prompt),
+    HumanMessage(content="Research about Black Holes")
+]
 
-Return your response ONLY in the format below:
+response = structured_llm.invoke(messages)
 
-{format_instructions}
+#Print raw response
+# print("RAW RESPONSE - ", response.content)
 
-Question:
-{query}
-"""
-)
-
-
-# Build prompt
-formatted_prompt = prompt.invoke(
-    {
-        "query": "What is the capital of Germany?",
-        "format_instructions": parser.get_format_instructions(),
-    }
-)
-
-
-# Send to model
-response = llm.invoke(formatted_prompt)
-
-
-# Parse into Pydantic object
-parsed_response = parser.parse(response.content)
-
+# Parse the raw text into a Python dictionary
+# result = parser.parse(response.content)
 
 # Print results
-print(parsed_response)
-print()
-print("Topic:", parsed_response.topic)
-print("Summary:", parsed_response.summary)
-print("Sources:", parsed_response.sources)
-print("Tools Used:", parsed_response.tools_used)
+print(response.topic)
+print(response.summary)
+print(response.key_facts)
+print(response.conclusion)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # #Create Prompt Template
