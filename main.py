@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage
 from pydantic import BaseModel, Field
 from tools import search_tool, get_word_count
 import os
@@ -44,7 +44,40 @@ messages = [
 
 print("Agent starting...")
 
+while True:
 
+    #LLM thinks and responds
+    response = llm_with_tools.invoke(messages)
+
+    #Add LLM response to messahe history
+    messages.append(response)
+
+    #Check if LLM wants to use tools
+    if not response.tool_calls:
+        print("The agent has the answer. No need of the tools...")
+        break # exit the loop
+
+    for tool_call in response.tool_calls:
+        print(f"Agent using tool: {tool_call['name']}")
+        print(f"With input: {tool_call['args']}\n")
+
+    #which tool to run
+    if tool_call["name"] == "duckduckgo_search":
+        tool_result = search_tool.invoke(tool_call["args"])
+
+    elif tool_call["name"] == "get_word_count":
+        tool_result = get_word_count.invoke(tool_call["args"])
+
+    #append the responses gather with the help of tool
+    messages.append(ToolMessage(
+        content = str(tool_result),
+        tool_call_id=tool_call["id"]
+    ))
+
+#Final instruction
+messages.append(HumanMessage(
+    content = "Based on your research, provide the final structured response"
+))
 
 #Attach the structure to the LLM
 structured_llm = llm.with_structured_output(ResearchResponse)
