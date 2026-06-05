@@ -68,7 +68,7 @@ while True:
     elif tool_call["name"] == "get_word_count":
         tool_result = get_word_count.invoke(tool_call["args"])
 
-    #append the responses gather with the help of tool
+    #Append tool result to messages
     messages.append(ToolMessage(
         content = str(tool_result),
         tool_call_id=tool_call["id"]
