@@ -129,10 +129,5 @@ ddgs
 
 ## 🚀 What I Learned
 
-This project taught me how a real AI agent works under the hood — not just calling an LLM and getting a response, but building the full loop where the agent autonomously decides what tools to use, when to use them, and when it has enough information to stop. Understanding this foundation is the stepping stone toward building multi-agent systems.
-
+This project taught me how a real AI agent works under the hood — not just calling an LLM and getting a response, but building the full loop where the agent autonomously decides what tools to use, when to use them, and when it has enough information to stop.
 ---
-
-## 📌 Note
-
-This is a learning project built to understand the fundamentals of AI agents before moving on to multi-agent systems with frameworks like CrewAI and LangGraph.
